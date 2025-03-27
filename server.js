@@ -60,11 +60,11 @@ app.post("/send-otp", async (req, res) => {
 });
 
 // ✅ Set Telegram Webhook
-const setWebhook = async () => {
-    const webhookUrl = "https://your-render-url.onrender.com/telegram-webhook"; // Change after deployment
-    await fetch(`${TELEGRAM_API_URL}/setWebhook?url=${webhookUrl}`);
-};
-setWebhook();
+// const setWebhook = async () => {
+//     const webhookUrl = "https://tg-otp-server.onrender.com/telegram-webhook"; // Change after deployment
+//     await fetch(`${TELEGRAM_API_URL}/setWebhook?url=${webhookUrl}`);
+// };
+// setWebhook();
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8443;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
