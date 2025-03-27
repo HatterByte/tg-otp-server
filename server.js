@@ -15,53 +15,55 @@ const users = {};
 
 // ✅ Telegram Webhook Endpoint
 app.post("/telegram-webhook", async (req, res) => {
-  console.log("Received Webhook:", req.body);
+    console.log("Received Webhook:", req.body);
 
-  const message = req.body.message;
-  const text = message.text;
+    const message = req.body.message;
+    if (!message) return res.sendStatus(200); // Ignore empty requests
 
-  if (message) {
     const chatId = message.chat.id;
-    const phoneNumber = message.text;
+    const text = message.text;
+    const contact = message.contact; // If user shares contact
 
-    if (/^\d{10}$/.test(phoneNumber)) {
-      users[phoneNumber] = chatId;
-      console.log("User stored:", users);
-      await sendMessage(chatId, "✅ Registered for OTP!");
-    } else if (phoneNumber === "/start") {
-      await fetch(`${TELEGRAM_API_URL}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: "👋 Welcome! Please send your mobile number to register for OTP services.",
-          reply_markup: {
-            keyboard: [
-              [{ text: "📞 Send My Phone Number", request_contact: true }],
-            ],
+    if (text === "/start") {
+        await sendMessage(chatId, "👋 Welcome! Please send your mobile number to register for OTP services.", {
+            keyboard: [[{ text: "📞 Send My Phone Number", request_contact: true }]],
             resize_keyboard: true,
             one_time_keyboard: true,
-          },
-        }),
-      });
-    } else {
-      await sendMessage(
-        chatId,
-        "⚠️ Please send a valid 10-digit phone number."
-      );
+        });
+    } 
+    else if (contact) {
+        // User shared contact
+        const phoneNumber = contact.phone_number;
+        users[phoneNumber] = chatId; // Store mapping
+        console.log("User stored:", users);
+        await sendMessage(chatId, `✅ Registered! Your phone number (${phoneNumber}) is linked.`);
+    } 
+    else if (/^\d{10}$/.test(text)) {
+        // User manually entered a 10-digit number
+        users[text] = chatId;
+        console.log("User stored:", users);
+        await sendMessage(chatId, "✅ Registered for OTP!");
+    } 
+    else {
+        // Invalid input
+        await sendMessage(chatId, "⚠️ Please send a valid 10-digit phone number.");
     }
-  }
-  res.sendStatus(200);
+
+    res.sendStatus(200);
 });
 
 // ✅ Function to Send Messages
-const sendMessage = async (chatId, text) => {
-  await fetch(`${TELEGRAM_API_URL}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text }),
-  });
+const sendMessage = async (chatId, text, replyMarkup = null) => {
+    const payload = { chat_id: chatId, text };
+    if (replyMarkup) payload.reply_markup = replyMarkup;
+
+    await fetch(`${TELEGRAM_API_URL}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+    });
 };
+
 
 // ✅ Send OTP API
 app.post("/send-otp", async (req, res) => {
