@@ -28,7 +28,7 @@ export const telegramWebhook = async (req, res) => {
   } else if (contact) {
     const phoneNumber = contact.phone_number.slice(2);
     if (phoneNumber.length === 10) {
-      let user = User.findOneAndUpdate(
+      let user = await User.findOneAndUpdate(
         { phone: phoneNumber },
         { chatId },
         { upsert: true }
